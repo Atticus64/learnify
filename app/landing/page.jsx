@@ -9,7 +9,7 @@ export default function LandingPage() {
               <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">L</span>
               </div>
-              <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">Learnify</span>
+              <span className="ml-2 text-xl font-bold text-gray-900 dark:text-white">OpenHands</span>
             </div>
             <nav className="hidden md:flex space-x-8">
               <a href="#features" className="text-gray-600 hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400 transition-colors">
@@ -34,7 +34,7 @@ export default function LandingPage() {
             <span className="text-indigo-600 dark:text-indigo-400 block">Recursos de Aprendizaje</span>
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-3xl mx-auto">
-            Una plataforma colaborativa donde estudiantes y educadores comparten materiales educativos,
+            Una plataforma colaborativa donde estudiantes, adultos, jovenes y educadores comparten materiales educativos,
             tutoriales, cursos y recursos para potenciar el aprendizaje colectivo.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -59,10 +59,10 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              ¿Por qué elegir Learnify?
+              ¿Por qué elegir OpenHands?
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Descubre las características que hacen de Learnify la mejor plataforma para compartir conocimiento.
+              Descubre las características que hacen de OpenHands la mejor plataforma para compartir conocimiento.
             </p>
           </div>
 
@@ -77,7 +77,7 @@ export default function LandingPage() {
                 Recursos Diversos
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Accede a una amplia variedad de materiales: videos, documentos, cursos completos y más.
+                Accede a una amplia variedad de materiales compartidos: videos, documentos, cursos completos y más.
               </p>
             </div>
 
@@ -91,7 +91,7 @@ export default function LandingPage() {
                 Comunidad Activa
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Conecta con estudiantes y profesores de todo el mundo. Comparte y aprende juntos.
+                Conecta con personas de todo el mundo, unete a comunidades dependiendo del tipo de conocimiento que buscas adquirir. Comparte y aprende juntos.
               </p>
             </div>
 
@@ -119,7 +119,7 @@ export default function LandingPage() {
                 Acceso Gratuito
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                La mayoría de los recursos son gratuitos. Contribuye y accede sin restricciones.
+                Los recursos son de acceso gratuito, ya que estan basados en compartir la fuente original. Contribuye y accede sin restricciones.
               </p>
             </div>
 
@@ -133,7 +133,7 @@ export default function LandingPage() {
                 Actualizaciones Constantes
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Recursos siempre actualizados con los últimos avances en educación y tecnología.
+                Recursos siempre actualizados con los últimos avances en educación y tecnología soportados por una comunidad activa y con hambre de aprender.
               </p>
             </div>
 
@@ -147,7 +147,7 @@ export default function LandingPage() {
                 Calidad Garantizada
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                Sistema de calificaciones y reseñas para asegurar la calidad de los recursos compartidos.
+                Sistema de calificaciones y reseñas con la vinculación de la reputación de los usuarios que comparten los recursos, esto con el fin de asegurar la calidad de los recursos compartidos.
               </p>
             </div>
           </div>
@@ -161,7 +161,7 @@ export default function LandingPage() {
             ¿Listo para comenzar tu viaje de aprendizaje?
           </h2>
           <p className="text-xl text-indigo-100 mb-8">
-            Únete a miles de estudiantes y educadores que ya están compartiendo conocimiento en Learnify.
+            Únete a miles de estudiantes y educadores que ya están compartiendo conocimiento en OpenHands.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
@@ -188,7 +188,7 @@ export default function LandingPage() {
               <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">L</span>
               </div>
-              <span className="ml-2 text-xl font-bold text-white">Learnify</span>
+              <span className="ml-2 text-xl font-bold text-white">OpenHands</span>
             </div>
             <div className="flex space-x-6">
               <a href="#" className="text-gray-400 hover:text-white transition-colors">
@@ -204,7 +204,7 @@ export default function LandingPage() {
           </div>
           <div className="mt-8 pt-8 border-t border-gray-800 text-center">
             <p className="text-gray-400">
-              © 2024 Learnify. Todos los derechos reservados.
+              OpenHands. Aprende y disfruta del proceso 
             </p>
           </div>
         </div>
