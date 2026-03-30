@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import {
   Search, X, ChevronLeft, Bell, MessageSquare,
   Settings, MessageCircle, Share2, Bookmark,
-  Star, Link2, TrendingUp, SlidersHorizontal, RotateCcw, Plus 
+  Star, Link2, TrendingUp, SlidersHorizontal, RotateCcw, Plus
 } from "lucide-react";
 
 // ─── Palette ─────────────────────────────────────────────
@@ -104,10 +104,9 @@ function Tag({ label, active, onClick }) {
 }
 
 function PostCard({ post, query }) {
-    const router = useRouter();
+  const router = useRouter();
   const [saved, setSaved] = useState(false);
 
-  // Highlight search term in title
   const highlightTitle = (title) => {
     if (!query) return title;
     const regex = new RegExp(`(${query})`, "gi");
@@ -138,12 +137,10 @@ function PostCard({ post, query }) {
       )}
 
       <div style={{ display:"flex" }}>
-        {/* Vote */}
         <div style={{ padding:"16px 12px", display:"flex", flexDirection:"column", alignItems:"center", background:C.offWhite, borderRight:`1px solid ${C.border}`, minWidth:52 }}>
           <LikeButton count={post.votes} />
         </div>
 
-        {/* Body */}
         <div style={{ flex:1, padding:"16px 20px" }} onClick={() => router.push(`/post`)}>
           <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:8, flexWrap:"wrap" }}>
             <span style={{ fontSize:12, color:C.orange, fontWeight:700 }}>{post.community}</span>
@@ -222,10 +219,10 @@ function PostCard({ post, query }) {
   );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
-export default function SearchPage() {
+// ─── Inner component (uses useSearchParams) ───────────────────────────────────
+function SearchContent() {
   const router       = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams(); 
 
   const [query,          setQuery]          = useState(searchParams.get("q") || "linux");
   const [inputVal,       setInputVal]       = useState(searchParams.get("q") || "linux");
@@ -235,10 +232,8 @@ export default function SearchPage() {
   const [community,      setCommunity]      = useState("Todas");
   const [sort,           setSort]           = useState("Relevancia");
   const [filtersVisible, setFiltersVisible] = useState(true);
+  const [allTags,        setAllTags]        = useState(POPULAR_TAGS);
   const customTagRef = useRef(null);
-
-  // All tags 
-  const [allTags, setAllTags] = useState(POPULAR_TAGS);
 
   useEffect(() => { if (addingTag) customTagRef.current?.focus(); }, [addingTag]);
 
@@ -269,7 +264,6 @@ export default function SearchPage() {
     setQuery(inputVal);
   };
 
-  // Filter results 
   const results = MOCK_RESULTS.filter(p => {
     const matchQuery = !query || p.title.toLowerCase().includes(query.toLowerCase()) || p.tags.some(t => t.includes(query.toLowerCase()));
     const matchTags  = activeTags.length === 0 || activeTags.some(at => p.tags.includes(at));
@@ -277,6 +271,173 @@ export default function SearchPage() {
     return matchQuery && matchTags && matchComm;
   });
 
+  return (
+    <div style={{ display:"flex", minHeight:"100vh" }}>
+      <div style={{ flex:1, display:"flex", flexDirection:"column", minWidth:0 }}>
+
+        {/* Topbar */}
+        <header style={{ background:C.white, borderBottom:`1px solid ${C.border}`, padding:"0 28px", height:60, display:"flex", alignItems:"center", gap:16, position:"sticky", top:0, zIndex:50 }}>
+          <button onClick={() => router.push("/user")} style={{ background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", gap:6, color:C.muted, fontSize:13, fontWeight:600, transition:"color .15s" }}
+            onMouseEnter={e => e.currentTarget.style.color = C.orange}
+            onMouseLeave={e => e.currentTarget.style.color = C.muted}>
+            OpenHands <ChevronLeft size={15} />
+          </button>
+          <h1 style={{ fontSize:18, fontWeight:800, color:C.text, letterSpacing:-.3 }}>Búsqueda</h1>
+          <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:10 }}>
+            {[Bell, MessageSquare, Settings].map((Icon, i) => (
+              <button key={i} style={{ width:36, height:36, borderRadius:9, border:`1px solid ${C.border}`, background:C.white, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:C.muted, transition:"border-color .15s, color .15s" }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = C.orange; e.currentTarget.style.color = C.orange; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.muted; }}>
+                <Icon size={16} />
+              </button>
+            ))}
+            <UserButton afterSignOutUrl="/" />
+          </div>
+        </header>
+
+        {/* Content */}
+        <div style={{ flex:1, padding:"28px 28px", maxWidth:1100, margin:"0 auto", width:"100%" }}>
+
+          {/* Search bar */}
+          <form onSubmit={handleSearch} style={{ position:"relative", marginBottom:20 }}>
+            <Search size={18} color={C.orange} style={{ position:"absolute", left:18, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }} />
+            <input
+              value={inputVal}
+              onChange={e => setInputVal(e.target.value)}
+              placeholder="Buscar scripts, comunidades o #tags..."
+              style={{ width:"100%", padding:"15px 54px 15px 50px", borderRadius:16, border:`2px solid ${C.orange}`, fontSize:15, color:C.text, background:C.white, boxShadow:`0 4px 20px rgba(255,109,45,.12)`, transition:"box-shadow .2s" }}
+              onFocus={e => e.target.style.boxShadow = "0 6px 28px rgba(255,109,45,.22)"}
+              onBlur={e => e.target.style.boxShadow = "0 4px 20px rgba(255,109,45,.12)"}
+            />
+            {inputVal && (
+              <button type="button" onClick={() => { setInputVal(""); setQuery(""); }} style={{ position:"absolute", right:54, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:C.muted, display:"flex", alignItems:"center" }}>
+                <X size={16} />
+              </button>
+            )}
+            <button type="submit" style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", background:C.orange, border:"none", borderRadius:10, width:38, height:38, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", transition:"background .15s" }}
+              onMouseEnter={e => e.currentTarget.style.background = C.orangeLight}
+              onMouseLeave={e => e.currentTarget.style.background = C.orange}>
+              <Search size={16} color="#fff" />
+            </button>
+          </form>
+
+          {/* Tags */}
+          <div style={{ background:C.white, borderRadius:16, border:`1px solid ${C.border}`, padding:"18px 20px", marginBottom:20, boxShadow:`0 1px 6px rgba(0,0,0,.04)` }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
+              <TrendingUp size={15} color={C.orange} />
+              <span style={{ fontSize:13, fontWeight:700, color:C.text }}>Tags populares</span>
+              {activeTags.length > 0 && (
+                <span style={{ fontSize:11, background:C.orange, color:"#fff", borderRadius:99, padding:"1px 8px", fontWeight:700 }}>
+                  {activeTags.length} activos
+                </span>
+              )}
+            </div>
+            <div style={{ display:"flex", flexWrap:"wrap", gap:8, alignItems:"center" }}>
+              {allTags.map(tag => (
+                <Tag key={tag} label={tag} active={activeTags.includes(tag)} onClick={() => toggleTag(tag)} />
+              ))}
+              {addingTag ? (
+                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                  <input
+                    ref={customTagRef}
+                    value={customTag}
+                    onChange={e => setCustomTag(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCustomTag(); } if (e.key === "Escape") setAddingTag(false); }}
+                    placeholder="#mitag"
+                    style={{ padding:"4px 12px", borderRadius:99, border:`1.5px solid ${C.orange}`, fontSize:12, width:110, color:C.text, background:C.orangeDim }}
+                  />
+                  <button onClick={addCustomTag} style={{ background:C.orange, border:"none", borderRadius:99, padding:"4px 12px", fontSize:12, color:"#fff", fontWeight:700, cursor:"pointer" }}>+ Añadir</button>
+                  <button onClick={() => setAddingTag(false)} style={{ background:"none", border:`1.5px solid ${C.border}`, borderRadius:99, padding:"4px 10px", fontSize:12, color:C.muted, cursor:"pointer" }}>Cancel</button>
+                </div>
+              ) : (
+                <button onClick={() => setAddingTag(true)} style={{ padding:"4px 12px", borderRadius:99, fontSize:12, fontWeight:600, border:`1.5px dashed ${C.border}`, background:"none", color:C.muted, cursor:"pointer", display:"flex", alignItems:"center", gap:4, transition:"border-color .15s, color .15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = C.orange; e.currentTarget.style.color = C.orange; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.muted; }}>
+                  <Plus size={12} /> Añadir tag
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Filters bar */}
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:20, flexWrap:"wrap" }}>
+            <button onClick={() => setFiltersVisible(v => !v)} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", borderRadius:10, border:`1.5px solid ${filtersVisible ? C.orange : C.border}`, background: filtersVisible ? C.orangeDim : C.white, color: filtersVisible ? C.orange : C.muted, fontSize:13, fontWeight:600, cursor:"pointer", transition:"all .15s" }}>
+              <SlidersHorizontal size={14} /> Filtros
+            </button>
+
+            {filtersVisible && (
+              <>
+                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                  <span style={{ fontSize:12, color:C.muted, fontWeight:600 }}>Comunidad:</span>
+                  <select value={community} onChange={e => setCommunity(e.target.value)} style={{ padding:"7px 12px", borderRadius:10, border:`1.5px solid ${community !== "Todas" ? C.orange : C.border}`, background: community !== "Todas" ? C.orangeDim : C.white, color: community !== "Todas" ? C.orange : C.text, fontSize:13, fontWeight:600, cursor:"pointer" }}>
+                    <option>Todas</option>
+                    {COMMUNITIES.map(c => <option key={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                  <span style={{ fontSize:12, color:C.muted, fontWeight:600 }}>Ordenar:</span>
+                  <div style={{ display:"flex", gap:4 }}>
+                    {SORT_OPTIONS.map(s => (
+                      <button key={s} onClick={() => setSort(s)} style={{ padding:"7px 12px", borderRadius:10, border:`1.5px solid ${sort === s ? C.orange : C.border}`, background: sort === s ? C.orangeDim : C.white, color: sort === s ? C.orange : C.muted, fontSize:12, fontWeight:600, cursor:"pointer", transition:"all .15s" }}>
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {hasFilters && (
+              <button onClick={clearAll} style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:6, padding:"8px 14px", borderRadius:10, border:`1.5px solid #FF6D6D`, background:"#FFF5F5", color:"#FF6D6D", fontSize:13, fontWeight:600, cursor:"pointer", transition:"opacity .15s" }}
+                onMouseEnter={e => e.currentTarget.style.opacity = ".75"}
+                onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
+                <RotateCcw size={13} /> Limpiar filtros
+              </button>
+            )}
+          </div>
+
+          {/* Results count */}
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:16 }}>
+            <span style={{ fontSize:13, color:C.muted }}>
+              {results.length > 0
+                ? <><span style={{ fontWeight:700, color:C.text }}>{results.length} resultados</span> para "{query || "todo"}"</>
+                : <span style={{ color:"#FF6D6D", fontWeight:600 }}>Sin resultados para "{query}"</span>
+              }
+            </span>
+            {activeTags.length > 0 && (
+              <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
+                {activeTags.map(t => (
+                  <span key={t} style={{ fontSize:11, background:C.orangeDim, color:C.orange, borderRadius:99, padding:"2px 8px", fontWeight:600, display:"flex", alignItems:"center", gap:4 }}>
+                    {t}
+                    <button onClick={() => toggleTag(t)} style={{ background:"none", border:"none", cursor:"pointer", color:C.orange, display:"flex", lineHeight:1 }}>
+                      <X size={10} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Results */}
+          {results.length > 0
+            ? results.map(post => <PostCard key={post.id} post={post} query={query} />)
+            : (
+              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"60px 0", gap:14 }}>
+                <div style={{ fontSize:48 }}>🔍</div>
+                <span style={{ fontSize:18, fontWeight:700, color:C.text }}>Sin resultados</span>
+                <span style={{ fontSize:14, color:C.muted }}>Intenta con otros tags o términos de búsqueda</span>
+                <button onClick={clearAll} style={{ marginTop:8, padding:"10px 22px", borderRadius:10, border:"none", background:C.orange, color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer" }}>Limpiar filtros</button>
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main export — Suspense va AQUÍ, envolviendo el componente que usa useSearchParams ───
+export default function SearchPage() {
   return (
     <>
       <style>{`
@@ -289,177 +450,13 @@ export default function SearchPage() {
         ::-webkit-scrollbar-thumb { background:${C.border}; border-radius:4px; }
       `}</style>
 
-      <div style={{ display:"flex", minHeight:"100vh" }}>
-
-
-        {/* ── Main ── */}
-        <div style={{ flex:1, display:"flex", flexDirection:"column", minWidth:0 }}>
-
-          {/* Topbar */}
-          <header style={{ background:C.white, borderBottom:`1px solid ${C.border}`, padding:"0 28px", height:60, display:"flex", alignItems:"center", gap:16, position:"sticky", top:0, zIndex:50 }}>
-            <button onClick={() => router.push("/user")} style={{ background:"none", border:"none", cursor:"pointer", display:"flex", alignItems:"center", gap:6, color:C.muted, fontSize:13, fontWeight:600, transition:"color .15s" }}
-              onMouseEnter={e => e.currentTarget.style.color = C.orange}
-              onMouseLeave={e => e.currentTarget.style.color = C.muted}>
-               OpenHands <ChevronLeft size={15} />
-            </button>
-            <h1 style={{ fontSize:18, fontWeight:800, color:C.text, letterSpacing:-.3 }}>Búsqueda</h1>
-            <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:10 }}>
-              {[Bell, MessageSquare, Settings].map((Icon, i) => (
-                <button key={i} style={{ width:36, height:36, borderRadius:9, border:`1px solid ${C.border}`, background:C.white, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:C.muted, transition:"border-color .15s, color .15s" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = C.orange; e.currentTarget.style.color = C.orange; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.muted; }}>
-                  <Icon size={16} />
-                </button>
-              ))}
-              <UserButton afterSignOutUrl="/" />
-            </div>
-          </header>
-
-          {/* Content */}
-          <div style={{ flex:1, padding:"28px 28px", maxWidth:1100, margin:"0 auto", width:"100%" }}>
-
-            {/* ── Search bar ── */}
-            <form onSubmit={handleSearch} style={{ position:"relative", marginBottom:20 }}>
-              <Search size={18} color={C.orange} style={{ position:"absolute", left:18, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }} />
-              <input
-                value={inputVal}
-                onChange={e => setInputVal(e.target.value)}
-                placeholder="Buscar scripts, comunidades o #tags..."
-                style={{ width:"100%", padding:"15px 54px 15px 50px", borderRadius:16, border:`2px solid ${C.orange}`, fontSize:15, color:C.text, background:C.white, boxShadow:`0 4px 20px rgba(255,109,45,.12)`, transition:"box-shadow .2s" }}
-                onFocus={e => e.target.style.boxShadow = "0 6px 28px rgba(255,109,45,.22)"}
-                onBlur={e => e.target.style.boxShadow = "0 4px 20px rgba(255,109,45,.12)"}
-              />
-              {inputVal && (
-                <button type="button" onClick={() => { setInputVal(""); setQuery(""); }} style={{ position:"absolute", right:54, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:C.muted, display:"flex", alignItems:"center" }}>
-                  <X size={16} />
-                </button>
-              )}
-              <button type="submit" style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)", background:C.orange, border:"none", borderRadius:10, width:38, height:38, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", transition:"background .15s" }}
-                onMouseEnter={e => e.currentTarget.style.background = C.orangeLight}
-                onMouseLeave={e => e.currentTarget.style.background = C.orange}>
-                <Search size={16} color="#fff" />
-              </button>
-            </form>
-
-            {/* ── Tags ── */}
-            <div style={{ background:C.white, borderRadius:16, border:`1px solid ${C.border}`, padding:"18px 20px", marginBottom:20, boxShadow:`0 1px 6px rgba(0,0,0,.04)` }}>
-              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
-                <TrendingUp size={15} color={C.orange} />
-                <span style={{ fontSize:13, fontWeight:700, color:C.text }}>Tags populares</span>
-                {activeTags.length > 0 && (
-                  <span style={{ fontSize:11, background:C.orange, color:"#fff", borderRadius:99, padding:"1px 8px", fontWeight:700 }}>
-                    {activeTags.length} activos
-                  </span>
-                )}
-              </div>
-              <div style={{ display:"flex", flexWrap:"wrap", gap:8, alignItems:"center" }}>
-                {allTags.map(tag => (
-                  <Tag key={tag} label={tag} active={activeTags.includes(tag)} onClick={() => toggleTag(tag)} />
-                ))}
-
-                {/* Add custom tag */}
-                {addingTag ? (
-                  <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                    <input
-                      ref={customTagRef}
-                      value={customTag}
-                      onChange={e => setCustomTag(e.target.value)}
-                      onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCustomTag(); } if (e.key === "Escape") setAddingTag(false); }}
-                      placeholder="#mitag"
-                      style={{ padding:"4px 12px", borderRadius:99, border:`1.5px solid ${C.orange}`, fontSize:12, width:110, color:C.text, background:C.orangeDim }}
-                    />
-                    <button onClick={addCustomTag} style={{ background:C.orange, border:"none", borderRadius:99, padding:"4px 12px", fontSize:12, color:"#fff", fontWeight:700, cursor:"pointer" }}>+ Añadir</button>
-                    <button onClick={() => setAddingTag(false)} style={{ background:"none", border:`1.5px solid ${C.border}`, borderRadius:99, padding:"4px 10px", fontSize:12, color:C.muted, cursor:"pointer" }}>Cancel</button>
-                  </div>
-                ) : (
-                  <button onClick={() => setAddingTag(true)} style={{ padding:"4px 12px", borderRadius:99, fontSize:12, fontWeight:600, border:`1.5px dashed ${C.border}`, background:"none", color:C.muted, cursor:"pointer", display:"flex", alignItems:"center", gap:4, transition:"border-color .15s, color .15s" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = C.orange; e.currentTarget.style.color = C.orange; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.muted; }}>
-                    <Plus size={12} /> Añadir tag
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* ── Filters bar ── */}
-            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:20, flexWrap:"wrap" }}>
-              {/* Toggle filters */}
-              <button onClick={() => setFiltersVisible(v => !v)} style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", borderRadius:10, border:`1.5px solid ${filtersVisible ? C.orange : C.border}`, background: filtersVisible ? C.orangeDim : C.white, color: filtersVisible ? C.orange : C.muted, fontSize:13, fontWeight:600, cursor:"pointer", transition:"all .15s" }}>
-                <SlidersHorizontal size={14} /> Filtros
-              </button>
-
-              {filtersVisible && (
-                <>
-                  {/* Community filter */}
-                  <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                    <span style={{ fontSize:12, color:C.muted, fontWeight:600 }}>Comunidad:</span>
-                    <select value={community} onChange={e => setCommunity(e.target.value)} style={{ padding:"7px 12px", borderRadius:10, border:`1.5px solid ${community !== "Todas" ? C.orange : C.border}`, background: community !== "Todas" ? C.orangeDim : C.white, color: community !== "Todas" ? C.orange : C.text, fontSize:13, fontWeight:600, cursor:"pointer" }}>
-                      <option>Todas</option>
-                      {COMMUNITIES.map(c => <option key={c}>{c}</option>)}
-                    </select>
-                  </div>
-
-                  {/* Sort */}
-                  <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                    <span style={{ fontSize:12, color:C.muted, fontWeight:600 }}>Ordenar:</span>
-                    <div style={{ display:"flex", gap:4 }}>
-                      {SORT_OPTIONS.map(s => (
-                        <button key={s} onClick={() => setSort(s)} style={{ padding:"7px 12px", borderRadius:10, border:`1.5px solid ${sort === s ? C.orange : C.border}`, background: sort === s ? C.orangeDim : C.white, color: sort === s ? C.orange : C.muted, fontSize:12, fontWeight:600, cursor:"pointer", transition:"all .15s" }}>
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Clear all */}
-              {hasFilters && (
-                <button onClick={clearAll} style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:6, padding:"8px 14px", borderRadius:10, border:`1.5px solid #FF6D6D`, background:"#FFF5F5", color:"#FF6D6D", fontSize:13, fontWeight:600, cursor:"pointer", transition:"opacity .15s" }}
-                  onMouseEnter={e => e.currentTarget.style.opacity = ".75"}
-                  onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
-                  <RotateCcw size={13} /> Limpiar filtros
-                </button>
-              )}
-            </div>
-
-            {/* ── Results count ── */}
-            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:16 }}>
-              <span style={{ fontSize:13, color:C.muted }}>
-                {results.length > 0
-                  ? <><span style={{ fontWeight:700, color:C.text }}>{results.length} resultados</span> para "{query || "todo"}"</>
-                  : <span style={{ color:"#FF6D6D", fontWeight:600 }}>Sin resultados para "{query}"</span>
-                }
-              </span>
-              {activeTags.length > 0 && (
-                <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
-                  {activeTags.map(t => (
-                    <span key={t} style={{ fontSize:11, background:C.orangeDim, color:C.orange, borderRadius:99, padding:"2px 8px", fontWeight:600, display:"flex", alignItems:"center", gap:4 }}>
-                      {t}
-                      <button onClick={() => toggleTag(t)} style={{ background:"none", border:"none", cursor:"pointer", color:C.orange, display:"flex", lineHeight:1 }}>
-                        <X size={10} />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* ── Results ── */}
-            {results.length > 0
-              ? results.map(post => <PostCard key={post.id} post={post} query={query} />)
-              : (
-                <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"60px 0", gap:14 }}>
-                  <div style={{ fontSize:48 }}>🔍</div>
-                  <span style={{ fontSize:18, fontWeight:700, color:C.text }}>Sin resultados</span>
-                  <span style={{ fontSize:14, color:C.muted }}>Intenta con otros tags o términos de búsqueda</span>
-                  <button onClick={clearAll} style={{ marginTop:8, padding:"10px 22px", borderRadius:10, border:"none", background:C.orange, color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer" }}>Limpiar filtros</button>
-                </div>
-              )
-            }
-          </div>
+      <Suspense fallback={
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", minHeight:"100vh", background:C.offWhite }}>
+          <div style={{ fontSize:14, color:C.muted, fontWeight:600 }}>Cargando...</div>
         </div>
-      </div>
+      }>
+        <SearchContent />
+      </Suspense>
     </>
   );
 }
