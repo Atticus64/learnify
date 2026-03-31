@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuthGate } from "../hooks/useAuthGate";
 import { UserButton, useUser } from "@clerk/nextjs";
 import {
   ChevronLeft, Bell, MessageSquare, Settings,
@@ -75,6 +76,7 @@ const INITIAL_COMMENTS = [
 
 // ─── Star rating picker ───────────────────────────────────────────────────────
 function StarPicker({ value, onChange }) {
+    const { requireAuth, isSignedIn } = useAuthGate();
   const [hover, setHover] = useState(0);
   return (
     <div className={styles.starPicker}>
@@ -126,6 +128,7 @@ function Avatar({ src, initials, size = 36 }) {
 
 // ─── Comment node (recursive) ─────────────────────────────────────────────────
 function CommentNode({ comment, depth = 0, onReply }) {
+  const { requireAuth, isSignedIn } = useAuthGate();
   const [liked, setLiked]       = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [replying, setReplying]   = useState(false);
@@ -185,7 +188,7 @@ function CommentNode({ comment, depth = 0, onReply }) {
               {/* Actions */}
               <div className={styles.commentActions}>
                 <button 
-                  onClick={() => setLiked(v => !v)} 
+                  onClick={() => requireAuth(() => setLiked(v => !v))} 
                   className={`${styles.actionBtn} ${styles.heartBtn} ${liked ? styles.heartBtnActive : ""}`}
                 >
                   <Heart size={13} fill={liked ? "var(--red)" : "none"} />
@@ -193,7 +196,7 @@ function CommentNode({ comment, depth = 0, onReply }) {
                 </button>
 
                 <button 
-                  onClick={() => setReplying(v => !v)} 
+                  onClick={() => requireAuth(() => setReplying(v => !v))} 
                   className={`${styles.actionBtn} ${styles.replyToggleBtn} ${replying ? styles.replyToggleBtnActive : ""}`}
                 >
                   <MessageCircle size={13} /> Responder
@@ -252,6 +255,7 @@ function CommentNode({ comment, depth = 0, onReply }) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function PostPage() {
+  const { requireAuth, isSignedIn } = useAuthGate();
   const router        = useRouter();
   const { user }      = useUser();
   const [liked,       setLiked]       = useState(false);
@@ -396,7 +400,7 @@ export default function PostPage() {
             {/* Action bar */}
             <div className={styles.actionBar}>
               <button 
-                onClick={() => setLiked(v => !v)} 
+                onClick={() => requireAuth(() => setLiked(v => !v))} 
                 className={`${styles.actionMainBtn} ${styles.likeBtn} ${liked ? styles.likeBtnActive : ""}`}
               >
                 <Heart size={15} fill={liked ? "var(--red)" : "none"} />
@@ -409,7 +413,7 @@ export default function PostPage() {
               </button>
 
               <button 
-                onClick={() => setSaved(v => !v)} 
+                onClick={() => requireAuth(() => setSaved(v => !v))} 
                 className={`${styles.actionMainBtn} ${styles.saveBtn} ${saved ? styles.saveBtnActive : ""}`}
               >
                 <Bookmark size={15} fill={saved ? "var(--orange)" : "none"} />
@@ -421,7 +425,7 @@ export default function PostPage() {
               </button>
 
               <button 
-                onClick={() => setReported(v => !v)} 
+                onClick={() => requireAuth(() => setReported(v => !v))} 
                 className={`${styles.actionMainBtn} ${styles.reportBtn} ${reported ? styles.reportBtnActive : ""}`}
               >
                 <Flag size={14} />
@@ -464,7 +468,7 @@ export default function PostPage() {
                   )}
                 </div>
                 <button 
-                  onClick={submitComment} 
+                  onClick={() => requireAuth(() => submitComment())} 
                   disabled={!newComment.trim()} 
                   className={styles.submitCommentBtn}
                 >
@@ -485,7 +489,7 @@ export default function PostPage() {
               {["Destacados","Recientes","Mejor valorados"].map(s => (
                 <button 
                   key={s} 
-                  onClick={() => setSortComments(s)} 
+                  onClick={() => requireAuth(() => setSortComments(s))} 
                   className={`${styles.sortBtn} ${sortComments === s ? styles.sortBtnActive : ""}`}
                 >
                   {s}

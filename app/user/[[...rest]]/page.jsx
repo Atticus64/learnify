@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAuthGate } from "../../hooks/useAuthGate";
 import { UserButton, useUser } from "@clerk/nextjs";
 import {
   Home, FolderOpen, MessageSquare, Plus, Bell, Settings,
@@ -106,11 +107,13 @@ const COMMUNITIES = [
 // ─── Components ───────────────────────────────────────────────────────────────
 
 function LikeButton({ count }) {
+  const { requireAuth, isSignedIn } = useAuthGate();
+
   const [liked, setLiked] = useState(false);
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
       <button
-        onClick={() => setLiked((v) => !v)}
+        onClick={() => requireAuth(() => setLiked((v) => !v))}
         className={`like-btn ${liked ? "like-btn--liked" : "like-btn--unliked"}`}
       >
         {liked ? "❤️" : "🤍"}
@@ -127,6 +130,8 @@ function Tag({ label }) {
 }
 
 function PostCard({ post }) {
+  const { requireAuth, isSignedIn } = useAuthGate();
+
   const router = useRouter();
   const [saved, setSaved] = useState(false);
 
@@ -221,7 +226,7 @@ function PostCard({ post }) {
               </button>
             ))}
             <button
-              onClick={() => setSaved((v) => !v)}
+              onClick={() => requireAuth(() => setSaved((v) => !v))}
               className={`action-btn action-btn--save ${saved ? "action-btn--saved" : ""}`}
             >
               <Bookmark size={14} fill={saved ? "#FF6D2D" : "none"} />
@@ -243,27 +248,42 @@ export default function Dashboard() {
   const [activeTab, setActiveTab]     = useState("For You");
   const [search, setSearch]           = useState("");
   const router = useRouter();
-  const { user } = useUser();
+  const { user, isSignedInn, isLoaded } = useUser();
+  const { requireAuth, isSignedIn } = useAuthGate();
 
+  useEffect(() => {
+    if (isLoaded) {
+      const w = window.innerWidth;
+      // Solo forzamos abrir la barra si es escritorio y el usuario está logueado
+      if (w >= 1000) {
+        setSidebarOpen(!!isSignedIn);
+      }
+    }
+  }, [isLoaded, isSignedIn]);
+
+  // ── 2. EFECTO DE RESPONSIVE: Maneja los menús flotantes al cambiar el tamaño ──
   useEffect(() => {
     const handleResize = () => {
       const w = window.innerWidth;
+
       if (w < 1000) {
-        setSidebarOpen(false);
         setIsOverlay(true);
+        setSidebarOpen(false); // Forzamos cerrar en móvil
       } else {
         setIsOverlay(false);
-        setSidebarOpen(true);
+        // OJO: Aquí ya no forzamos abrir/cerrar. 
+        // Así permitimos que el usuario la controle manualmente en PC.
       }
 
       if (w < 850) {
-        setRightOpen(false);
         setIsRightOverlay(true);
+        setRightOpen(false);
       } else {
         setIsRightOverlay(false);
         setRightOpen(true);
       }
     };
+
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -306,7 +326,7 @@ export default function Dashboard() {
                 {badge && <span className="nav-item__badge">{badge}</span>}
               </button>
             ))}
-            <button className="btn-new-project" onClick={() => router.push("/post/new")}>
+            <button className="btn-new-project" onClick={() => requireAuth(() => router.push("/post/new"))}>
               <Plus size={16} /> New Project
             </button>
           </nav>
@@ -327,7 +347,7 @@ export default function Dashboard() {
       <div className="main">
         {/* Topbar */}
         <header className="topbar">
-          <button className="topbar__toggle" onClick={() => { if (isRightOverlay && rightOpen) setRightOpen(false); setSidebarOpen((v) => !v); }}>
+          <button className="topbar__toggle" onClick={() => requireAuth(() => { if (isRightOverlay && rightOpen) setRightOpen(false); setSidebarOpen((v) => !v); })}>
             {sidebarOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
           </button>
           <h1 className="topbar__title">OpenHands</h1>
@@ -376,7 +396,7 @@ export default function Dashboard() {
             {/* FAB */}
             <button 
               className="fab-new-post" 
-              onClick={() => router.push("/post/new")}
+              onClick={() => requireAuth(() => router.push("/post/new"))}
               title="Nueva publicación"
             >
               <PenSquare size={24} />
@@ -435,7 +455,7 @@ export default function Dashboard() {
                     </div>
                     <button 
                       className="recommended-item__join"
-                      onClick={() => handleJoinCommunity(c.name)}
+                      onClick={() => requireAuth(() => handleJoinCommunity(c.name))}
                     >
                       Join
                     </button>
