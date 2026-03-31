@@ -137,7 +137,7 @@ function NewPostForm() {
                   value={community} 
                   onChange={(e) => setCommunity(e.target.value)}
                   className={styles.select}
-                  disabled={isLocked} // Bloqueamos el select si viene de la URL
+                  disabled={isLocked} 
                 >
                   {/* Si está bloqueado y no está en la lista del usuario, la añadimos temporalmente para que se muestre */}
                   {isLocked && !USER_COMMUNITIES.includes(targetCommunity) && (

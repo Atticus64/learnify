@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
+import { useAuthGate } from "../hooks/useAuthGate";
 import { useRouter, useSearchParams } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import {
@@ -9,7 +10,7 @@ import {
   Star, Link2, TrendingUp, SlidersHorizontal, RotateCcw, Plus
 } from "lucide-react";
 import styles from "./search.module.css";
-import "../globals.css"; // Asegúrate de que esto esté importado en tu layout o aquí
+import "../globals.css"; 
 
 // ─── Static data ──────────────────────────────────────────────────────────────
 const POPULAR_TAGS = [
@@ -59,10 +60,12 @@ const MOCK_RESULTS = [
 // ─── Sub-components ───────────────────────────────────────────────────────────
 function LikeButton({ count }) {
   const [liked, setLiked] = useState(false);
+  const { requireAuth, isSignedIn } = useAuthGate();
+  
   return (
     <div className={styles.likeContainer}>
       <button 
-        onClick={() => setLiked(v => !v)} 
+        onClick={() => requireAuth(() => setLiked(v => !v))} 
         className={`${styles.likeBtn} ${liked ? styles.likeBtnActive : ""}`}
       >
         {liked ? "❤️" : "🤍"}
@@ -86,6 +89,7 @@ function Tag({ label, active, onClick }) {
 }
 
 function PostCard({ post, query }) {
+  const { requireAuth, isSignedIn } = useAuthGate();
   const router = useRouter();
   const [saved, setSaved] = useState(false);
 
@@ -184,7 +188,7 @@ function PostCard({ post, query }) {
               </button>
             ))}
             <button 
-              onClick={() => setSaved(v => !v)} 
+              onClick={() => requireAuth(() => setSaved(v => !v))} 
               className={`${styles.actionBtn} ${styles.saveBtn} ${saved ? styles.saveBtnActive : ""}`}
             >
               <Bookmark size={14} fill={saved ? "var(--orange)" : "none"} />

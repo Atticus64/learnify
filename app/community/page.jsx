@@ -2,6 +2,7 @@
 
 import CommunityChat from "./communitychat";
 import { useState } from "react";
+import { useAuthGate } from "../hooks/useAuthGate";
 import { useRouter } from "next/navigation";
 import { UserButton, useUser } from "@clerk/nextjs";
 import {
@@ -20,7 +21,7 @@ const COMMUNITY = {
   banner_url:    null,
   pfp_url:       null,
   fecha_creacion:"2026-03-29 22:32:34",
-  es_admin:      true,
+  es_admin:      false,
   miembros:      1284,
   posts_total:   347,
   en_linea:      42,
@@ -77,10 +78,12 @@ const POSTS = [
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function LikeButton({ count }) {
+  const { requireAuth, isSignedIn } = useAuthGate();
+
   const [liked, setLiked] = useState(false);
   return (
     <button
-      onClick={() => setLiked(v => !v)}
+      onClick={() => requireAuth(() => setLiked(v => !v))}
       className={`${styles.likeBtn} ${liked ? styles.likeBtnActive : ""}`}
     >
       <Heart size={14} fill={liked ? "var(--red)" : "none"} color={liked ? "var(--red)" : "var(--muted)"} />
@@ -90,6 +93,7 @@ function LikeButton({ count }) {
 }
 
 function PostCard({ post }) {
+  const { requireAuth, isSignedIn } = useAuthGate();
   const router = useRouter();
   const [saved, setSaved] = useState(false);
 
@@ -117,7 +121,7 @@ function PostCard({ post }) {
             <span>{post.time}</span>
           </div>
 
-          <button className={styles.postTitle} onClick={() => router.push(`/post/${post.id}`)}>
+          <button className={styles.postTitle} onClick={() => router.push(`/post`)}>
             {post.title}
           </button>
 
@@ -179,7 +183,7 @@ function PostCard({ post }) {
               <Share2 size={14} /> Compartir
             </button>
             <button
-              onClick={() => setSaved(v => !v)}
+              onClick={() => requireAuth(() => setSaved(v => !v))}
               className={`${styles.actionBtn} ${styles.saveBtn} ${saved ? styles.saveBtnActive : ""}`}
             >
               <Bookmark size={14} fill={saved ? "var(--orange)" : "none"} />
@@ -241,6 +245,7 @@ function EditModal({ community, onClose, onSave }) {
 export default function CommunityPage() {
   const router = useRouter();
   const { user } = useUser();
+  const { requireAuth, isSignedIn } = useAuthGate();
 
   const [community,  setCommunity]  = useState(COMMUNITY);
   const [joined,     setJoined]     = useState(false);
@@ -379,11 +384,11 @@ export default function CommunityPage() {
 
               {/* Actions */}
               <div className={styles.communityActions}>
-                <button className={styles.btnCreatePost} onClick={() => router.push(`/post/new?community=${encodeURIComponent("d/React Hub")}`)}>
+                <button className={styles.btnCreatePost} onClick={() => requireAuth(() => router.push(`/post/new?community=${encodeURIComponent("d/React Hub")}`))}>
                   <PenSquare size={15} /> Crear post
                 </button>
                 <button
-                  onClick={() => setJoined(v => !v)}
+                  onClick={() => requireAuth(() => setJoined(v => !v))}
                   className={`${styles.btnJoin} ${joined ? styles.btnJoined : ""}`}
                 >
                   {joined ? "Salir" : "Unirse"}
@@ -398,7 +403,7 @@ export default function CommunityPage() {
               {["Posts", "Chat", "Reglas", "Moderadores"].map(tab => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => requireAuth(() => setActiveTab(tab))}
                   className={`${styles.tab} ${activeTab === tab ? styles.tabActive : ""}`}
                 >
                   {tab === "Chat" && <MessageSquare size={13} style={{ marginRight:4 }} />}
@@ -540,7 +545,7 @@ export default function CommunityPage() {
                     <span className={styles.quickRuleText}>{r.titulo}</span>
                   </div>
                 ))}
-                <button className={styles.seeAllBtn} onClick={() => setActiveTab("Reglas")}>
+                <button className={styles.seeAllBtn} onClick={() => requireAuth(() => setActiveTab("Reglas"))}>
                   Ver todas las reglas →
                 </button>
               </div>
