@@ -16,11 +16,7 @@ const C = {
   orange:      "#FF6D2D",
   orangeLight: "#FF8F5C",
   orangeDim:   "#FFF0E9",
-<<<<<<< Updated upstream
-  dark:        "#1A1F2E",
-=======
   gray:        "#545454",
->>>>>>> Stashed changes
   white:       "#FFFFFF",
   offWhite:    "#F7F8FC",
   border:      "#E8EBF4",
@@ -32,10 +28,6 @@ const C = {
   green:       "#10B981",
 };
 
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 // ─── Sample data ──────────────────────────────────────────────────────────────
 const POSTS = [
   {
