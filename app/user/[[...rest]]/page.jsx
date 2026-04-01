@@ -85,7 +85,7 @@ const C = {
 //   },
 // ];
 
-const TRENDING = ["#React19", "#PythonAutomation", "#DockerCompose", "#CI_CD", "#NextJS15"];
+// const TRENDING = ["#React19", "#PythonAutomation", "#DockerCompose", "#CI_CD", "#NextJS15"];
 
 const RECOMMENDED_COMMUNITIES = [
   { icon: "🐍", name: "d/Python Devs", members: "12.4k" },
@@ -130,7 +130,7 @@ function Tag({ label }) {
 function PostCard({ post }) {
   const router = useRouter();
   const [saved, setSaved] = useState(false);
-  console.log(post.title, post.codeLines)
+  // console.log(post.title, post.codeLines)
   // console.log(post)
   return (
     <div className={`post-card ${post.featured ? "post-card--featured" : ""}`}>
@@ -189,12 +189,17 @@ function PostCard({ post }) {
                 <span className="post-card__refs-title">References</span>
               </div>
               <div className="post-card__refs-list">
-                {post.refs.map((r, i) => (
+                {post.refs.map((url, i) => (
                   <div key={i} className="post-card__ref-item">
                     <Link2 size={13} color="#8B92A9" />
                     <div>
-                      <div className="post-card__ref-label">{r.label}</div>
-                      <div className="post-card__ref-sub">{r.sub}</div>
+                      <a
+                        className="post-card__ref-label"
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer">
+                        {url}
+                      </a>
                     </div>
                   </div>
                 ))}
@@ -250,13 +255,44 @@ export default function Dashboard() {
   const [page, setPage] = useState(1);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false)
+  const [loadingTrends, setLoadingTrends] = useState(false);
+  const [loadingUserComunity, setLoadingUserComunity] = useState(false);
+  const [trendsData, setTrendsData] = useState([]);
+  const [userCommunitys, setUserCommunitys] = useState([]);
+  //xD
+  //fetch de las comnidades del usuario
+  //pendiente de finalizar: loading animations
+  async function loaduserdata() {
+    try {
+      setLoadingTrends(true);
+      const trends = await fetch(`/api/trending/`);
+      const trendsData = await trends.json();
+      setUserCommunitys(trendsData);
+    } catch (e) {
+      console.log("errores: ", e);
+    } finally {
+      setLoadingTrends(false)
 
+    }
+    //loading de los datos de 'mis comunidades':D
+    try {
+      setLoadingUserComunity(true);
+      const userdata = await fetch(`/api/userdata/`);
+      const userCommunitys = await userdata.json();
+      setUserCommunitys(userCommunitys);
+    } catch (e) {
+      console.log("errores:", e);
+    } finally {
+      setLoadingUserComunity(false);
+
+    }
+  }
   async function loadhomepage(page = 1) {
     try {
       setLoading(true)
       const response = await fetch(`/api/resources?page=${page}`);
       const data = await response.json()
-      console.log("data:", data);
+      // console.log("data:", data);comentado con gc: V
       setPosts(data.items);
       SetHasMore(data.has_more);
     } catch (error) {
@@ -267,6 +303,7 @@ export default function Dashboard() {
 
   }
   useEffect(() => {
+    loaduserdata();
     loadhomepage(1);
 
   }, [])
@@ -340,7 +377,7 @@ export default function Dashboard() {
 
           <div>
             <span className="sidebar__section-label">My Communities</span>
-            {COMMUNITIES.map((c) => (
+            {userCommunitys.map((c) => (
               <button key={c.label} className="community-item">
                 <span className="community-item__icon">{c.icon}</span>
                 {c.label}
@@ -434,7 +471,7 @@ export default function Dashboard() {
                 <span className="widget__title">Trending Topics</span>
               </div>
               <div className="trending-tags">
-                {TRENDING.map((t) => (
+                {trendsData.map((t) => (
                   <button
                     key={t}
                     className="trending-tag"
